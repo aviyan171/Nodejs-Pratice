@@ -1,0 +1,27 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.input-container{
+    display: flex;
+    flex-direction: column;
+    max-width: 600px;
+    gap: 10px;
+    
+    margin:50px auto ;
+}
+.btn{
+    height: 40px;
+    width: 110px;
+}
+
+.input{
+    height: 60px;
+    padding: 10px;
+}
+
+.btn-container{
+    text-align: center;
+}
