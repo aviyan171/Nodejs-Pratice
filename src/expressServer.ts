@@ -2,21 +2,37 @@ import path, { dirname } from "path";
 import express from "express";
 import { fileURLToPath } from "url";
 import cors from "cors";
-import type { RequestHandler } from "express";
 import { NextFunction, Request, Response } from "express";
+import mongoose from "mongoose";
 
 const PORT = 4000;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
-const users: any = [];
+
+//connect to db
+mongoose
+  .connect("mongodb://127.0.0.1:27017", {
+    dbName: "backend",
+  })
+  .then(() => console.log("DB connected successfully"))
+  .catch();
+
+//schema
+
+const messageSchema = new mongoose.Schema({
+  name: String,
+  email: String,
+});
+const Message = mongoose.model("messages", messageSchema);
+
 //using middlewares
 app.use(express.static(path.join(__dirname, "public"))); // this middleware helps to  access public page
 app.use(express.urlencoded({ extended: true })); // this will get data sent from frontend otherwise it will return undefined!!!
 
-const whiteList = ["https://www.youtube.com", "https://www.facebook.com"];
+const whiteList = ["https://www.youtube.com", "https://www.facebook.com", ""];
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    if (whiteList.indexOf(origin || "") !== -1 || !origin) {
+    if (whiteList.indexOf(origin || "") !== -1 || origin) {
       callback(null, true);
     } else {
       callback(new Error("not allowed by CORS"));
@@ -31,7 +47,7 @@ app.set("view engine", "ejs"); // this is use to configure ejs
 
 app.get("^/$|/index(.html)?", (req, res) => {
   // we can also use regex
-  res.render("index", { name: "Abhiyan" });
+  res.render("login");
 });
 app.get("/new-page(.html)?", (req, res) => {
   res.sendFile(path.join(__dirname, "views", "new-page.html"));
@@ -39,11 +55,23 @@ app.get("/new-page(.html)?", (req, res) => {
 app.get("/old-page(.html)?", (req, res) => {
   res.redirect(301, "/new-page.html");
 });
+app.get("/add", async (req, res) => {
+  try {
+    await Message.create({
+      name: "anmol",
+      email: "upreti@gmail.com",
+    });
+    res.send("success");
+  } catch (error) {
+    console.log(error);
+  }
+});
 
-app.post("/form-submission", (req, res) => {
-  console.log(req.body);
-  users.push(req.body);
-  console.log(users);
+app.post("/form-submission", async (req, res) => {
+  const { name, email } = req.body;
+  const messageBody = { name, email };
+  await Message.create(messageBody);
+  console.log(messageBody);
   res.render("success");
 });
 
@@ -68,6 +96,8 @@ app.get("/chain(.html)?", [one, two, three]);
 app.get("/*", (req, res) => {
   res.status(404).sendFile(path.join(__dirname, "views", "404.html"));
 });
+
+app.post("/login", (req, res) => {});
 
 const errorHandlerMiddleWare = (
   err: Error,
