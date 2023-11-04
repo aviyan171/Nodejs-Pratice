@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import cors from "cors";
 import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
+import cookieParser from "cookie-parser";
 
 const PORT = 4000;
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -28,6 +29,7 @@ const Message = mongoose.model("messages", messageSchema);
 //using middlewares
 app.use(express.static(path.join(__dirname, "public"))); // this middleware helps to  access public page
 app.use(express.urlencoded({ extended: true })); // this will get data sent from frontend otherwise it will return undefined!!!
+app.use(cookieParser()); //middleware for parsing cookie
 
 const whiteList = ["https://www.youtube.com", "https://www.facebook.com", ""];
 const corsOptions: cors.CorsOptions = {
@@ -46,8 +48,13 @@ app.set("views", path.join(__dirname, "views")); // this is usedn to locate view
 app.set("view engine", "ejs"); // this is use to configure ejs
 
 app.get("^/$|/index(.html)?", (req, res) => {
+  const token = req.cookies.token;
+  if (token) {
+    res.render("logout");
+  } else {
+    res.render("login"); //res.render is used in ejs for locating the file
+  }
   // we can also use regex
-  res.render("login");
 });
 app.get("/new-page(.html)?", (req, res) => {
   res.sendFile(path.join(__dirname, "views", "new-page.html"));
@@ -97,7 +104,21 @@ app.get("/*", (req, res) => {
   res.status(404).sendFile(path.join(__dirname, "views", "404.html"));
 });
 
-app.post("/login", (req, res) => {});
+app.post("/login", (req, res) => {
+  res.cookie("token", "i am in", {
+    httpOnly: true,
+    expires: new Date(Date.now() + 6000),
+  });
+  res.redirect("/");
+});
+
+app.post("/logout", (req, res) => {
+  res.cookie("token", null, {
+    httpOnly: true,
+    expires: new Date(Date.now()),
+  });
+  res.redirect("/");
+});
 
 const errorHandlerMiddleWare = (
   err: Error,
