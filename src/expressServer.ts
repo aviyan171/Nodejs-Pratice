@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import { Register, User } from "./schema/index.js";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
 const PORT = 4000;
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -104,9 +105,10 @@ app.post("/register", async (req, res) => {
     res.redirect("/");
     return;
   }
+  const hassedPassword = await bcrypt.hash(password, 10);
   const user = await Register.create({
     Username: username,
-    Password: password,
+    Password: hassedPassword,
     Email: email,
   });
   const token = jwt.sign(
